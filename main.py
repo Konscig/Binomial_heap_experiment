@@ -1,18 +1,30 @@
 import time
 import random
-from binomial_heap import BinomialHeap, Node
-from datetime import datetime
+from binomial_heap import BinomialHeap
 from tabulate import tabulate
 
 # Ваш класс BinomialHeap и код, связанный с ним, остаются такими же
 
-def run_experiment(k_values, n_values):
+
+def generate_prioritized_elements(n, high_priority_percentage):
+    high_priority_count = int(n * high_priority_percentage / 100)
+    low_priority_count = n - high_priority_count
+
+    high_priority_elements = [random.randint(1, 100) for _ in range(high_priority_count)]
+    low_priority_elements = [random.randint(101, 1000) for _ in range(low_priority_count)]
+
+    all_elements = high_priority_elements + low_priority_elements
+    random.shuffle(all_elements)
+    return all_elements
+
+
+def run_experiment(k_values, n_values, high_priority_percentage):
     results = []
 
     for k in k_values:
         for n in n_values:
             heaps = [BinomialHeap() for _ in range(k)]
-            orders = [int(time.mktime(datetime.now().timetuple())) + random.randint(1, 1000) for _ in range(n)]
+            orders = generate_prioritized_elements(n, high_priority_percentage)
 
             # Вставляем элементы в каждую кучу
             for i in range(k):
@@ -35,12 +47,15 @@ def run_experiment(k_values, n_values):
                 main_heap.delete_min()
             extract_duration = (time.time() - start_time) * 1000
 
-            results.append([k, n, f"{fill_duration:.2f} ms", f"{merge_duration:.2f} ms", f"{extract_duration:.2f} ms"])
+            results.append([k, n, high_priority_percentage, f"{fill_duration:.2f} ms", f"{merge_duration:.2f} ms", f"{extract_duration:.2f} ms"])
 
-    headers = ["k", "n", "Fill Duration", "Merge Duration", "Extract Duration"]
+    headers = ["k", "n", "High Priority %", "Fill Duration", "Merge Duration", "Extract Duration"]
     print(tabulate(results, headers=headers, tablefmt="grid"))
+
 
 k_values = [5, 10, 15]
 n_values = [100, 1000, 10000]
+high_priority_percentages = [10, 30, 50]  # Процент элементов с высоким приоритетом
 
-run_experiment(k_values, n_values)
+for high_priority_percentage in high_priority_percentages:
+    run_experiment(k_values, n_values, high_priority_percentage)
